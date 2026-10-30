@@ -1,0 +1,119 @@
+{
+  "name": "ente-auth",
+  "private": true,
+  "description": "Get TOTP codes from Ente Auth. Port of the Raycast Ente Auth extension.",
+  "categories": [
+    "Security"
+  ],
+  "keywords": [
+    "2fa",
+    "authenticator",
+    "ente",
+    "mfa",
+    "otp",
+    "totp"
+  ],
+  "license": "MIT",
+  "author": "khoirul",
+  "contributors": [],
+  "scripts": {
+    "build": "vici build",
+    "dev": "vici develop",
+    "test": "vp test",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@vicinae/api": "^0.29.2",
+    "otpauth": "^9.5.2",
+    "react": "19.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "19.1.17",
+    "typescript": "^5.9.2",
+    "vite-plus": "^1.4.0"
+  },
+  "icon": "icon.png",
+  "commands": [
+    {
+      "name": "get-totp",
+      "title": "Get TOTP",
+      "description": "Search an Ente Auth account and copy or paste its TOTP code",
+      "mode": "view"
+    },
+    {
+      "name": "import-secrets",
+      "title": "Import Secrets",
+      "description": "Export from the Ente CLI and store secrets encrypted, keyed by the system keychain",
+      "mode": "no-view"
+    },
+    {
+      "name": "export-secrets",
+      "title": "Export Secrets",
+      "description": "Run the Ente CLI export and list the exported accounts. Leaves a plaintext file.",
+      "mode": "view",
+      "disabledByDefault": true
+    },
+    {
+      "name": "delete-export",
+      "title": "Delete Export",
+      "description": "Delete the plaintext ente_auth.txt export and the CLI's backup copies",
+      "mode": "no-view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "cliPath",
+      "type": "textfield",
+      "required": false,
+      "title": "Ente CLI Path",
+      "default": "ente",
+      "description": "Path to the ente binary, or a bare name resolved from PATH.",
+      "placeholder": "ente"
+    },
+    {
+      "name": "exportPath",
+      "type": "directory",
+      "required": false,
+      "title": "Ente CLI Export Location",
+      "description": "Leave empty to use the Ente CLI's configured export dir. If set, the CLI's auth account is pointed here."
+    },
+    {
+      "name": "primaryAction",
+      "type": "dropdown",
+      "required": false,
+      "title": "Primary Action",
+      "description": "What Enter does on a code.",
+      "default": "paste",
+      "data": [
+        {
+          "title": "Paste",
+          "value": "paste"
+        },
+        {
+          "title": "Copy",
+          "value": "copy"
+        }
+      ]
+    },
+    {
+      "name": "deleteExport",
+      "type": "checkbox",
+      "required": false,
+      "title": "Privacy",
+      "label": "Delete export file after import",
+      "description": "The export contains every secret in plaintext.",
+      "default": true
+    },
+    {
+      "name": "fetchIcons",
+      "type": "checkbox",
+      "required": false,
+      "title": "Service Icons",
+      "label": "Download service icons",
+      "description": "Looks up service names on GitHub (Ente icon registry) and the Simple Icons CDN.",
+      "default": true
+    }
+  ],
+  "title": "Ente Auth"
+}
