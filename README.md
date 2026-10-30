@@ -8,7 +8,7 @@ Port of the [Raycast Ente Auth extension](https://github.com/raycast/extensions/
 
 - [Vicinae](https://vicinae.com)
 - [Node.js](https://nodejs.org) 20 or newer, and [pnpm](https://pnpm.io) (npm also works)
-- The [Ente CLI](https://github.com/ente-io/ente/tree/main/cli#readme), installed and logged in to an **auth** account. Setting it up is covered by Ente's docs, not this project. Check it with:
+- The [Ente CLI](https://github.com/ente-io/ente/tree/main/cli#readme), installed and logged in to an **auth** account. Check it with:
 
   ```sh
   ente account list   # should show "App: auth" and an "ExportDir"
