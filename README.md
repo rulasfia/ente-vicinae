@@ -1,56 +1,97 @@
 # Ente Auth for Vicinae
 
-TOTP codes from [Ente Auth](https://ente.io/auth) in Vicinae, on Linux, macOS and Windows. Port of the [Raycast Ente Auth extension](https://github.com/raycast/extensions/tree/main/extensions/ente-auth) by chkpwd, albarin, wires5210, xmok and jakoss (MIT, see `LICENSE`).
+Search your [Ente Auth](https://ente.io/auth) accounts from [Vicinae](https://vicinae.com) and paste or copy TOTP codes. Works on Linux, macOS and Windows.
 
-## Setup
+Port of the [Raycast Ente Auth extension](https://github.com/raycast/extensions/tree/main/extensions/ente-auth). Not affiliated with Ente.
 
-1. Install the [Ente CLI](https://github.com/ente-io/ente/tree/main/cli#readme). The extension finds `ente` (`ente.exe`) on `PATH`, plus `/opt/homebrew/bin` and `/usr/local/bin` on macOS and `~/.local/bin` on Linux. Otherwise set **Ente CLI Path**.
-2. `ente account add`, app `auth`, and pick an export directory.
-3. Run **Import Secrets**, then **Get TOTP**. Re-run **Import Secrets** after changing accounts on another device.
+## Requirements
+
+- [Vicinae](https://vicinae.com)
+- [Node.js](https://nodejs.org) 20 or newer, and [pnpm](https://pnpm.io) (npm also works)
+- The [Ente CLI](https://github.com/ente-io/ente/tree/main/cli#readme), installed and logged in to an **auth** account. Setting it up is covered by Ente's docs, not this project. Check it with:
+
+  ```sh
+  ente account list   # should show "App: auth" and an "ExportDir"
+  ```
+
+- Linux only: `secret-tool` (libsecret) and a running keyring such as GNOME Keyring or KWallet
+
+## Install
+
+```sh
+git clone https://github.com/rulasfia/ente-vicinae.git
+cd ente-vicinae
+pnpm install
+pnpm build
+```
+
+`pnpm build` installs the extension into Vicinae. Then, in Vicinae:
+
+1. Run **Import Secrets**
+2. Run **Get TOTP**
+
+Run **Import Secrets** again whenever you add, edit or remove accounts in Ente.
+
+### Not showing up?
+
+If this is your first locally built extension, restart Vicinae once. It only watches its extensions folder if that folder existed when it started.
+
+If import says the Ente CLI can't be found, set **Ente CLI Path** in the extension preferences. The extension looks on `PATH`, plus `/opt/homebrew/bin` and `/usr/local/bin` on macOS and `~/.local/bin` on Linux.
 
 ## Commands
 
-| Command        | Does                                                                                         |
-| -------------- | -------------------------------------------------------------------------------------------- |
-| Get TOTP       | Search accounts; paste or copy the current code, copy the next one                           |
-| Import Secrets | `ente export`, store the result encrypted, delete the plaintext export                       |
-| Export Secrets | `ente export` and list accounts; leaves a plaintext file (disabled by default)               |
-| Delete Export  | Delete `ente_auth.txt` and the CLI's timestamped `ente_auth_*.txt` backups in the export dir |
+| Command        | What it does                                                                       |
+| -------------- | ---------------------------------------------------------------------------------- |
+| Get TOTP       | Search accounts, paste or copy the current code, copy the next one                 |
+| Import Secrets | Runs `ente export`, stores the result encrypted, deletes the plaintext export      |
+| Export Secrets | Runs `ente export` and lists the accounts. Leaves a plaintext file. Off by default |
+| Delete Export  | Deletes `ente_auth.txt` and the CLI's `ente_auth_<date>.txt` backups               |
 
-## Security
+## Preferences
 
-Secrets are AES-256-GCM encrypted into the extension's support dir (`secrets.enc`, mode 0600, written atomically). Vicinae's LocalStorage is plaintext SQLite, so it only holds icon lookup misses (by service name) and usage ranking (by opaque hash). The 32-byte key is kept in:
+| Preference               | Default   | Notes                                                                  |
+| ------------------------ | --------- | ---------------------------------------------------------------------- |
+| Ente CLI Path            | `ente`    | Binary path, the folder containing it, or a name found on `PATH`       |
+| Ente CLI Export Location | CLI's own | If set, the CLI's auth account is pointed at this folder               |
+| Primary Action           | Paste     | What Enter does                                                        |
+| Privacy                  | On        | Delete the plaintext export after import                               |
+| Service Icons            | On        | Fetch icons from Ente's icon registry and Simple Icons by service name |
 
-| OS      | Key store                                                                        |
-| ------- | -------------------------------------------------------------------------------- |
-| Linux   | Secret Service via `secret-tool` (needs libsecret plus gnome-keyring or KWallet) |
-| macOS   | Login Keychain via `/usr/bin/security`                                           |
-| Windows | DPAPI-protected `key.dpapi` (current user only), via built-in `powershell.exe`   |
+## How your secrets are stored
 
-- The key only travels over stdin, never in process arguments.
-- This protects data at rest (backups, disk access, other users), not against malware running as you.
-- `ente export` writes every secret in plaintext. Import deletes it afterwards (preference, on by default), along with any backup the CLI made during that run. Backups made outside the extension are left alone; **Delete Export** removes them.
-- Copied codes are hidden from Vicinae's clipboard history. Pasted codes are not, since Vicinae's paste API has no option for it.
-- **Service Icons** looks up service names on GitHub (Ente's icon registry) and the Simple Icons CDN. Turn it off to keep them local.
+`ente export` writes every secret to a plaintext file. Import reads it, then deletes it along with any backup copy the CLI made during that run.
 
-## Re-import behavior
+The secrets are stored AES-256-GCM encrypted in the extension's data folder. The encryption key lives in your OS keychain:
 
-Import replaces the stored list with the latest export, so edits, deletions and additions made elsewhere carry over. Because `ente export` exits 0 even when it fails, the extension checks that the export file was actually rewritten:
+| OS      | Key stored in                                      |
+| ------- | -------------------------------------------------- |
+| Linux   | Secret Service (via `secret-tool`)                 |
+| macOS   | Login Keychain (via `/usr/bin/security`)           |
+| Windows | A DPAPI-protected file, readable only by your user |
 
-- Network error, expired session or empty vault: import fails and stored secrets stay as they were.
-- An older export file is still present: it is imported, and the toast says the export failed and shows that file's date.
-- Export with no usable TOTP entries: nothing is replaced.
-- HOTP, Steam and invalid entries are skipped and counted.
+- The key is passed to these tools over stdin, never as a command-line argument.
+- Vicinae's own LocalStorage is not encrypted, so it only holds usage ranking (by opaque hash) and icon lookup misses (by service name).
+- Copied codes are hidden from Vicinae's clipboard history. Pasted codes are not; Vicinae's paste API has no option for it.
+- Turn off **Service Icons** if you don't want service names sent to GitHub and the Simple Icons CDN.
+- This protects your secrets at rest (backups, disk access, other users). It does not protect against malware running as you.
 
-**Ente CLI Export Location** is optional. When empty, the CLI's configured dir is used and its config is never changed. When set, the CLI's auth account is pointed at it.
+## Re-importing
+
+Import replaces the stored list with the latest export, so changes made on other devices carry over. `ente export` exits successfully even when it fails, so the extension checks that a new export was actually written:
+
+- Network error, expired login or empty vault: nothing is replaced.
+- An older export file is still there: it is imported, and the toast says so with the file's date.
+- HOTP, Steam and invalid entries are skipped, and the toast shows how many.
 
 ## Development
 
 ```sh
-pnpm install
-pnpm dev        # live dev session in a running Vicinae
-pnpm build      # install into Vicinae's extension dir
-pnpm test       # unit and integration tests (fake Ente CLI and keychains)
-pnpm check      # format and lint
+pnpm dev               # live-reloading session in a running Vicinae
+pnpm test              # tests use a fake Ente CLI and simulated keychains
+pnpm check             # format and lint
 pnpm exec tsc --noEmit
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE). Based on the Raycast extension by chkpwd, albarin, wires5210, xmok and jakoss.

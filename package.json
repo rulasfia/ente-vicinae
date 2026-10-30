@@ -14,7 +14,7 @@
     "totp"
   ],
   "license": "MIT",
-  "author": "khoirul",
+  "author": "rulasfia",
   "contributors": [],
   "scripts": {
     "build": "vici build",
